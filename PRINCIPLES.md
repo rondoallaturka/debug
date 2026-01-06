@@ -1,70 +1,29 @@
-# Agentic Unix Philosophy
-
-## Context
-- Used when writing new code, features, or modules
-- Used when refactoring or extending existing systems
-- Used to ensure AI-generated code is maintainable, composable, and human-friendly
+# CLAUDE.md
 
 ## Core Philosophy
-Build systems that are modular, transparent, and easy for humans to maintain. The goal is not just code that works, but code that can be understood, debugged, and extended by humans long after the AI conversation ends.
 
----
+You follow the Unix philosophy: write simple, composable code with clean interfaces. Clarity beats cleverness. Smaller is better. When in doubt, do less.
 
-## Pillar 1: Modularity & Composition
+## Making Changes
 
-### Principles
-- **Small is beautiful**: Prefer three small functions over one large one
-- **Single responsibility**: Every function and module should have one strictly defined purpose
-- **Composable interfaces**: Design functions that can be chained and combined
-- **Avoid monoliths**: Build tools that do one thing well, not mega-functions
+**Minimal diffs.** Change only what's necessary to solve the problem. Don't refactor unrelated code, rename things "for consistency," or add features that weren't requested.
 
-### Concrete Guidelines
-- Aim for files under 250 lines; split when approaching this limit
-- Functions should rarely exceed 30-40 lines
-- If a function needs more than 3-4 parameters, consider a config object or breaking it up
-- When adding to existing code, respect the existing module boundaries
+**One thing at a time.** Each commit, PR, or change should do exactly one thing. If you're fixing a bug, don't also reorganize the file.
 
-### When Implementing
-- Before writing a new function, check if existing utilities can be composed
-- When a function grows beyond its original purpose, split it
-- Create clear separation between I/O, business logic, and data transformation
+**Work incrementally.** Get something working first, then iterate. Don't spend 10 steps building a perfect abstraction — build the simple version, verify it works, then improve if needed.
 
----
+**Fail fast.** If something will fail, fail immediately with a clear error. Never silently swallow errors or continue in a broken state.
 
-## Pillar 2: Clarity & Simplicity
+## Writing Code
 
-### Principles
-- **Clarity over cleverness**: Never use obscure language features to save lines
-- **Least surprise**: Functions should do exactly what their name suggests, nothing more
-- **Self-documenting code**: Variable and function names should make comments unnecessary
-- **Simplicity is strength**: Complexity is technical debt; add it only when required
+**Simple > clever.** Write code a tired developer can understand at 2am. No clever tricks, no unnecessary abstractions, no "elegant" solutions that require explanation.
 
-### Concrete Guidelines
-- Use verbose, descriptive names: `getUserAccountBalance` over `getUAB`
-- Avoid nested ternaries, complex one-liners, or "clever" bit manipulation
-- If you need a comment to explain what code does, consider rewriting the code
-- Prefer explicit over implicit behavior
+**Clear names.** Variables, functions, and files should say what they do. If you need a comment to explain what something is, rename it instead.
 
-### When Implementing
-- If you're tempted to write a clever solution, write the obvious one first
-- When editing existing code, match the surrounding style
-- Never sacrifice readability for marginal performance gains unless profiling demands it
+**Small functions, small files.** Each function does one thing. Each file owns one concept. If a function needs a comment explaining sections, split it.
 
----
+**Data over logic.** Encode business rules in data structures and configuration, not sprawling if/else chains. Dumb code operating on smart data is easier to debug.
 
-## Pillar 3: Data Over Logic
-
-### Principles
-- **Fold knowledge into data**: Complex branching logic often hides data that should be explicit
-- **Separate policy from mechanism**: How it works (engine) vs. what it does (configuration)
-- **Configuration over hardcoding**: Behavior that might change belongs in data, not code
-
-### Concrete Guidelines
-- Transform complex `if/else` chains into lookup tables or maps
-- Keep magic numbers and strings in named constants or config files
-- Design engines that are configured, not modified
-
-### When Implementing
 ```
 // AVOID: Logic-heavy approach
 function getDiscount(userType) {
@@ -87,92 +46,41 @@ function getDiscount(userType) {
 }
 ```
 
----
+**Handle errors explicitly.** Check for failure cases. Return errors, don't throw unless truly exceptional. Make error messages helpful — include what went wrong and what to do about it.
 
-## Pillar 4: Robustness & Transparency
+## Architecture Decisions
 
-### Principles
-- **Fail fast and loud**: Invalid input should cause immediate, clear failures
-- **No silent failures**: Never swallow errors or return ambiguous defaults
-- **Debuggability by design**: Make internal state inspectable
-- **Silence on success**: Clean output, not noisy confirmation messages
+**Use what exists.** Before writing new code, check if there's already a function, library, or pattern in the codebase that does this. Don't reinvent.
 
-### Concrete Guidelines
-- Validate inputs at system boundaries (API endpoints, CLI args, file parsing)
-- Throw descriptive errors with context: what failed, what was expected, what was received
-- Design data flows that can be logged and traced
-- Internal functions can trust validated data; don't re-validate everywhere
+**Separate concerns.** Keep mechanisms separate from policies. Keep interfaces separate from implementations. Keep I/O at the edges.
 
-### When Implementing
-```
-// AVOID: Silent failure
-function parseConfig(data) {
-  try {
-    return JSON.parse(data);
-  } catch {
-    return {};  // Silent fallback hides bugs
-  }
-}
+**Design for change.** Requirements will change. Make it easy to modify behavior without rewriting. Prefer configuration over hardcoding, hooks over inline logic.
 
-// PREFER: Explicit failure
-function parseConfig(data) {
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    throw new Error(`Invalid config JSON: ${e.message}`);
-  }
-}
-```
+**No "one true way."** Use the right tool for the problem. Don't force everything into one pattern because it's "consistent."
 
----
+## Communication
 
-## Pillar 5: Economy & Pragmatism
+**Explain your reasoning.** Before making changes, briefly state your understanding of the problem and your approach. This catches misunderstandings early.
 
-### Principles
-- **Maintainer time over CPU time**: Optimize for humans reading the code, not micro-performance
-- **Working code first**: Get it working correctly before optimizing
-- **Minimum viable change**: Change only what's necessary to achieve the goal
-- **Avoid premature abstraction**: Three similar lines are better than one premature abstraction
+**Be quiet when there's nothing to say.** Don't narrate obvious actions. Don't add filler. If the code is self-explanatory, don't explain it.
 
-### Concrete Guidelines
-- Don't create utilities or abstractions until you have 3+ genuine use cases
-- Don't add features, error handling, or flexibility that isn't required
-- Resist the urge to "clean up" surrounding code while making targeted fixes
-- Performance optimization requires measurement, not intuition
+**Surface uncertainty.** If you're unsure about something — requirements, implementation approach, potential side effects — say so. Ask rather than guess.
 
-### When Implementing
-- Complete the requested change before considering improvements
-- If you see potential refactors, note them but don't implement unless asked
-- Trust that internal code and framework guarantees work; don't add defensive code for impossible scenarios
+## Anti-patterns
 
----
-
-## Agentic Workflow Guidelines
-
-### Before Writing Code
-1. Read and understand existing code in the area you're modifying
-2. Identify the existing patterns and conventions in use
-3. Determine the minimum change needed to achieve the goal
-
-### While Writing Code
-1. Make changes incrementally; verify each step works
-2. Maintain consistency with surrounding code style
-3. If unsure between approaches, prefer the simpler one
-
-### After Writing Code
-1. Verify the change works as intended
-2. Ensure no unintended side effects in related functionality
-3. Remove any temporary debugging code
-
-### What NOT To Do
-- Don't add docstrings/comments to code you didn't change
+- Don't add comments or docstrings to code you didn't change
 - Don't refactor working code unless explicitly asked
-- Don't add error handling for scenarios that can't occur
-- Don't create new files when editing existing ones would suffice
-- Don't add "TODO" comments; implement or don't
-- Don't add backwards-compatibility shims; change the code directly
+- Don't add error handling for scenarios that can't happen
+- Don't create abstractions until you have 3+ real use cases
+- Don't add TODO comments — implement it or don't
+- Don't add backwards-compatibility shims — just change the code
 
----
+## Before You Act
+
+1. Do I understand what's actually being asked?
+2. What's the smallest change that solves this?
+3. Does this follow existing patterns in the codebase?
+4. What could break?
 
 ## Quick Reference
 
@@ -181,7 +89,15 @@ function parseConfig(data) {
 | Function getting long | Split into smaller functions | Add comments explaining sections |
 | Complex conditionals | Use lookup table/map | Nest more if/else |
 | Adding a feature | Minimal targeted changes | Refactor while you're there |
-| Error handling | Fail fast with context | Silent fallbacks |
+| Error occurs | Fail fast with context | Silent fallback or empty catch |
 | Naming | Verbose and descriptive | Abbreviated or clever |
-| New abstraction | Wait for 3+ use cases | Create preemptively |
+| New abstraction needed | Wait for 3+ use cases | Create preemptively |
 | Performance concern | Measure first | Optimize by intuition |
+
+## Remember
+
+- Prototype before polishing
+- Working before optimized
+- Explicit before implicit
+- Boring before clever
+- Done before perfect
